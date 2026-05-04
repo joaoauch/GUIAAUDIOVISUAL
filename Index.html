@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Desafío Maestro de Grabación</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap');
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: #0f172a;
+            color: #f8fafc;
+        }
+
+        .glass-card {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .option-btn {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .option-btn:hover:not(:disabled) {
+            transform: translateX(10px);
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .correct {
+            background: #22c55e !important;
+            border-color: #4ade80 !important;
+            color: white !important;
+        }
+
+        .wrong {
+            background: #ef4444 !important;
+            border-color: #f87171 !important;
+            color: white !important;
+        }
+
+        .level-badge {
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 0.75rem;
+            font-weight: 800;
+        }
+
+        .progress-bar {
+            transition: width 0.5s ease-in-out;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+
+    <div id="app" class="w-full max-w-2xl">
+        <!-- Pantalla de Inicio -->
+        <div id="start-screen" class="glass-card rounded-3xl p-8 text-center animate__animated animate__fadeIn">
+            <div class="text-6xl mb-6">🎥</div>
+            <h1 class="text-4xl font-extrabold mb-4 bg-gradient-to-r from-purple-400 to-pink-600 bg-clip-text text-transparent">
+                RETO DE PRODUCCIÓN
+            </h1>
+            <p class="text-slate-400 mb-8">Nivel Cinematográfico: Solo los expertos sobreviven a la edición. ¿Estás listo?</p>
+            <button onclick="quiz.start()" class="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-bold py-4 px-10 rounded-full text-xl shadow-lg transform transition hover:scale-105 active:scale-95">
+                ¡EMPEZAR EL RETO! 🎬
+            </button>
+        </div>
+
+        <!-- Pantalla de Preguntas -->
+        <div id="quiz-screen" class="hidden glass-card rounded-3xl p-6 md:p-8 animate__animated animate__fadeIn">
+            <div class="flex justify-between items-center mb-6">
+                <span id="level-indicator" class="level-badge px-3 py-1 rounded-full bg-red-500/20 text-red-400 border border-red-500/30">Nivel 1</span>
+                <span id="score-display" class="text-slate-400 font-bold">Puntos: 0</span>
+            </div>
+
+            <div class="w-full bg-slate-700 h-2 rounded-full mb-8 overflow-hidden">
+                <div id="progress" class="progress-bar bg-gradient-to-r from-indigo-500 to-purple-500 h-full w-0"></div>
+            </div>
+
+            <h2 id="question-text" class="text-xl md:text-2xl font-semibold mb-8 leading-tight"></h2>
+
+            <div id="options-container" class="space-y-4">
+                <!-- Las opciones se generarán aquí -->
+            </div>
+
+            <div id="feedback" class="mt-8 hidden animate__animated animate__fadeInUp">
+                <p id="feedback-text" class="text-center font-bold text-lg mb-4"></p>
+                <button onclick="quiz.nextQuestion()" class="w-full bg-slate-100 text-slate-900 font-bold py-4 rounded-2xl hover:bg-white transition shadow-xl">
+                    SIGUIENTE PREGUNTA ➔
+                </button>
+            </div>
+        </div>
+
+        <!-- Pantalla de Resultados -->
+        <div id="result-screen" class="hidden glass-card rounded-3xl p-10 text-center animate__animated animate__zoomIn">
+            <div id="result-emoji" class="text-7xl mb-6">🏆</div>
+            <h2 class="text-3xl font-extrabold mb-2" id="result-title">¡Resultados!</h2>
+            <div class="text-5xl font-black text-indigo-400 mb-6" id="final-score">0/10</div>
+            <p class="text-slate-300 text-lg mb-8" id="result-desc"></p>
+            <button onclick="location.reload()" class="border-2 border-slate-600 hover:border-slate-400 text-white font-bold py-3 px-8 rounded-full transition">
+                REINTENTAR EL DESAFÍO 🔄
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const questions = [
+            {
+                level: "FÍSICA DE LUZ",
+                color: "red",
+                q: "Estás grabando y el brillo de tu cara sube y baja constantemente. ¿Qué error crítico de configuración cometiste?",
+                options: ["No activaste el Bloqueo AE/AF", "No limpiaste el lente", "El celular está en 30fps", "Olvidaste el Modo Avión"],
+                correct: 0,
+                desc: "¡Exacto! El bloqueo AE/AF fija la luz para que no cambie sola."
+            },
+            {
+                level: "FÍSICA DE LUZ",
+                color: "red",
+                q: "Tienes una ventana gigante a tus espaldas y tu cara se ve negra. ¿Cómo lo solucionas?",
+                options: ["Subes el brillo del celular", "Usas flash frontal", "Te das la vuelta frente a la ventana", "Grabas en 4K"],
+                correct: 2,
+                desc: "¡Correcto! La luz debe darte de frente, nunca de espaldas."
+            },
+            {
+                level: "PSICOLOGÍA",
+                color: "yellow",
+                q: "¿Por qué se prohíbe mirarte a ti mismo en la pantalla?",
+                options: ["Gasta más batería", "Rompe la conexión visual", "Confunde el enfoque", "Reduce la resolución"],
+                correct: 1,
+                desc: "¡Así es! Debes mirar al lente para conectar con la audiencia."
+            },
+            {
+                level: "PSICOLOGÍA",
+                color: "yellow",
+                q: "¿Cómo evitas el temido 'Efecto Moiré'?",
+                options: ["Vocalizando más", "Evitando rayas finas o cuadros", "Sin eco", "Bloqueando el fondo"],
+                correct: 1,
+                desc: "¡Bien! Las rayas finas vuelven loco al sensor de la cámara."
+            },
+            {
+                level: "POST-PRODUCCIÓN",
+                color: "green",
+                q: "¿Qué significa 'dejar aire' al inicio y al final?",
+                options: ["Respirar profundo", "2s de silencio y quietud", "Mucha ventilación", "Espacio sobre la cabeza"],
+                correct: 1,
+                desc: "¡Vital! Esos segundos son oro para poder editar sin cortes feos."
+            },
+            {
+                level: "POST-PRODUCCIÓN",
+                color: "green",
+                q: "Si el guion es muy largo, ¿cuál es la técnica profesional?",
+                options: ["Improvisar", "Una sola toma larga", "Grabar frase por frase", "Pegar papel abajo"],
+                correct: 2,
+                desc: "¡Correcto! Frase por frase asegura calidad y menos errores."
+            },
+            {
+                level: "CONFIGURACIÓN",
+                color: "blue",
+                q: "¿Cuál es el 'Combo Ganador' de ajustes?",
+                options: ["4K / 120 fps", "720p / 24 fps", "1080p / 30-60 fps", "480p / Auto fps"],
+                correct: 2,
+                desc: "¡Ideal! 1080p es el estándar perfecto para compartir y editar."
+            },
+            {
+                level: "CONFIGURACIÓN",
+                color: "blue",
+                q: "Tu audio tiene mucho eco. ¿Primer paso para corregirlo?",
+                options: ["Alejarte más", "Gritar fuerte", "Cercanía y silencio total", "Filtro de belleza"],
+                correct: 2,
+                desc: "¡Exacto! El silencio ambiental y la cercanía son la clave."
+            },
+            {
+                level: "ENERGÍA",
+                color: "purple",
+                q: "¿Por qué subir la energía un 10% más de lo normal?",
+                options: ["La cámara la 'aplana'", "Para el micrófono", "Para que pese menos", "Por el algoritmo"],
+                correct: 0,
+                desc: "¡Sí! Lo que tú sientes exagerado, en cámara se ve natural."
+            },
+            {
+                level: "ENERGÍA",
+                color: "purple",
+                q: "Al terminar tu frase, ¿qué gesto salva al editor?",
+                options: ["Pulgar arriba", "Mirada y sonrisa 2 segundos", "Gritar ¡Corten!", "Revisar el video"],
+                correct: 1,
+                desc: "¡Perfecto! Ese cierre limpio hace que el video se vea pro."
+            }
+        ];
+
+        const quiz = {
+            currentIdx: 0,
+            score: 0,
+            isAnswered: false,
+
+            start() {
+                document.getElementById('start-screen').classList.add('hidden');
+                document.getElementById('quiz-screen').classList.remove('hidden');
+                this.renderQuestion();
+            },
+
+            renderQuestion() {
+                this.isAnswered = false;
+                const q = questions[this.currentIdx];
+                const feedback = document.getElementById('feedback');
+                feedback.classList.add('hidden');
+                
+                // Actualizar UI
+                const badge = document.getElementById('level-indicator');
+                badge.innerText = `Nivel ${Math.floor(this.currentIdx / 2) + 1}: ${q.level}`;
+                badge.className = `level-badge px-3 py-1 rounded-full bg-${q.color}-500/20 text-${q.color}-400 border border-${q.color}-500/30`;
+                
+                document.getElementById('question-text').innerText = q.q;
+                document.getElementById('progress').style.width = `${(this.currentIdx / questions.length) * 100}%`;
+                
+                const container = document.getElementById('options-container');
+                container.innerHTML = '';
+                
+                q.options.forEach((opt, idx) => {
+                    const btn = document.createElement('button');
+                    btn.className = 'option-btn w-full text-left p-4 rounded-2xl border border-slate-700 bg-slate-800/50 hover:bg-slate-700 transition font-medium flex items-center justify-between group';
+                    btn.innerHTML = `<span>${opt}</span> <span class="opacity-0 group-hover:opacity-100 transition">👉</span>`;
+                    btn.onclick = () => this.checkAnswer(idx, btn);
+                    container.appendChild(btn);
+                });
+            },
+
+            checkAnswer(idx, btn) {
+                if (this.isAnswered) return;
+                this.isAnswered = true;
+                
+                const q = questions[this.currentIdx];
+                const btns = document.querySelectorAll('.option-btn');
+                const feedback = document.getElementById('feedback');
+                const feedbackText = document.getElementById('feedback-text');
+                
+                if (idx === q.correct) {
+                    btn.classList.add('correct');
+                    this.score++;
+                    feedbackText.innerText = "✨ " + q.desc;
+                    feedbackText.className = "text-center font-bold text-lg mb-4 text-green-400";
+                } else {
+                    btn.classList.add('wrong');
+                    btns[q.correct].classList.add('correct');
+                    feedbackText.innerText = "❌ ¡Ups! No es correcto.";
+                    feedbackText.className = "text-center font-bold text-lg mb-4 text-red-400";
+                }
+
+                document.getElementById('score-display').innerText = `Puntos: ${this.score}`;
+                feedback.classList.remove('hidden');
+            },
+
+            nextQuestion() {
+                this.currentIdx++;
+                if (this.currentIdx < questions.length) {
+                    this.renderQuestion();
+                } else {
+                    this.showResults();
+                }
+            },
+
+            showResults() {
+                document.getElementById('quiz-screen').classList.add('hidden');
+                document.getElementById('result-screen').classList.remove('hidden');
+                
+                const scoreTag = document.getElementById('final-score');
+                const titleTag = document.getElementById('result-title');
+                const descTag = document.getElementById('result-desc');
+                const emojiTag = document.getElementById('result-emoji');
+                
+                scoreTag.innerText = `${this.score}/10`;
+                
+                if (this.score >= 9) {
+                    titleTag.innerText = "👑 MAESTRO DEL CINE";
+                    descTag.innerText = "¡Increíble! Estás listo para dirigir comerciales. Tus videos van a quedar impecables.";
+                    emojiTag.innerText = "🌟";
+                } else if (this.score >= 5) {
+                    titleTag.innerText = "🎬 CREADOR COMPETENTE";
+                    descTag.innerText = "Buen trabajo. Conoces lo básico, pero repasa la guía para no darle dolores de cabeza al editor.";
+                    emojiTag.innerText = "🎥";
+                } else {
+                    titleTag.innerText = "📱 APRENDIZ EN PRÁCTICAS";
+                    descTag.innerText = "¡Cuidado! Tu video podría tener fallos críticos. Dale otra leída a la guía y vuelve a intentarlo.";
+                    emojiTag.innerText = "😅";
+                }
+            }
+        };
+    </script>
+</body>
+</html>
